@@ -1,5 +1,5 @@
 import { describe, expect, it } from "@jest/globals";
-import { genFunction, genReturn } from "../src/generator/generator";
+import { genExpression, genFunction, genReturn } from "../src/generator/generator";
 import { ASTNode } from "../src/parser/parser";
 
 describe('generator', () => {
@@ -18,6 +18,28 @@ describe('generator', () => {
         )
         const expected: string = '.globl main\nmain:\n  movl    $2, %eax\n  ret\n';
         expect(actual).toEqual(expected);
+    });
+
+    describe('genExpression', () => {
+
+        it('generates negation op', () => {
+            const actual: string = genExpression(
+                new ASTNode('unary-op', '-', 
+                new ASTNode('constant', '10'))
+            );
+            const expected: string = '  movl    $10, %eax\n  neg    %eax\n';
+            expect(actual).toEqual(expected);
+        });
+
+        it ('generates logical negation', () => {
+            const actual: string = genExpression(
+                new ASTNode('unary-op', '!', 
+                new ASTNode('constant', '10'))
+            );
+            const expected: string = '  movl    $10, %eax\n  cmpl    $0, %eax\n  movl    $0, %eax\n  sete    %al\n';
+            expect(actual).toEqual(expected);
+        });
+        
     });
 
 });

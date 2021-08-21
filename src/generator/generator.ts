@@ -11,10 +11,30 @@ function genFunction(node: ASTNode): string {
     + genReturn(node.childNodes[0]);
 }
 
+function genExpression(node: ASTNode): string {
+    if (node.nodeType === 'unary-op') {
+        switch(node.value) {
+            case '~':
+                return genExpression(node.childNodes[0]) + genLine(genCommand('not', '%eax'), 1);
+            case '!':
+                return genExpression(node.childNodes[0]) 
+                + genLine(genCommand('cmpl', '$0', '%eax'), 1) 
+                + genLine(genCommand('movl', '$0', '%eax'), 1)
+                + genLine(genCommand('sete', '%al'), 1)
+                break;
+            case '-':
+                return genExpression(node.childNodes[0]) + genLine(genCommand('neg', '%eax'), 1);
+        }
+    }
+    if (node.nodeType === 'constant') {
+        return genLine(genCommand('movl', `$${node.value}`, '%eax'), 1);
+    }
+}
+
 function genReturn(node: ASTNode): string {
     if (node.nodeType !== 'return') throw new Error('invalid');
 
-    return genLine(genCommand('movl', `$${node.childNodes[0].value}`, '%eax'), 1)
+    return genExpression(node.childNodes[0])
     + genLine('ret', 1);
 }
 
@@ -33,4 +53,4 @@ function genCommand(command: string, arg1: string, arg2: string = '', arg3: stri
     return gen;
 }
 
-export { generate, genFunction, genReturn }
+export { generate, genFunction, genReturn, genExpression }
